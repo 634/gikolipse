@@ -16,16 +16,35 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.ui.part.*;
-import org.eclipse.jface.viewers.*;
-import org.eclipse.swt.graphics.Image;
-import org.eclipse.jface.action.*;
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.ui.*;
-import org.eclipse.swt.widgets.Menu;
-import org.eclipse.swt.SWT;
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IMenuListener;
+import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.viewers.DoubleClickEvent;
+import org.eclipse.jface.viewers.IDoubleClickListener;
+import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.IStructuredContentProvider;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.ITreeContentProvider;
+import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.ViewerSorter;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.ISharedImages;
+import org.eclipse.ui.IWorkbenchActionConstants;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.part.DrillDownAdapter;
+import org.eclipse.ui.part.ViewPart;
 
 /**
  * This sample class demonstrates how to plug-in a new
@@ -52,11 +71,175 @@ public class BBSListView extends ViewPart
 	 */
 	public static final String ID = "com.github.gikolipse.views.BBSListView";
 
-	private TreeViewer viewer;
+	private TreeViewer treeViewer;
 	private DrillDownAdapter drillDownAdapter;
-	private Action action1;
-	private Action action2;
+	private Action sampleAction1;
+	private Action sampleAction2;
 	private Action doubleClickAction;
+	private Action expandAction;
+	private Action collapseAction;
+
+	/**
+	 * The constructor.
+	 */
+	public BBSListView()
+	{
+	}
+
+	/**
+	 * This is a callback that will allow us
+	 * to create the viewer and initialize it.
+	 */
+	public void createPartControl(Composite parent)
+	{
+		treeViewer = new TreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
+		drillDownAdapter = new DrillDownAdapter(treeViewer);
+		treeViewer.setContentProvider(new ViewContentProvider());
+		treeViewer.setLabelProvider(new ViewLabelProvider());
+		treeViewer.setSorter(new NameSorter());
+		treeViewer.setInput(getViewSite());
+
+		// Create the help context id for the viewer's control
+		PlatformUI.getWorkbench().getHelpSystem().setHelp(treeViewer.getControl(), "Gikolipse.viewer");
+		makeActions();
+		makeToolBar();
+
+		hookContextMenu();
+		hookDoubleClickAction();
+
+		contributeToActionBars();
+	}
+
+	private void makeToolBar()
+	{
+		IToolBarManager mgr = getViewSite().getActionBars().getToolBarManager();
+		mgr.add(collapseAction);
+	}
+
+	private void hookContextMenu()
+	{
+		MenuManager menuMgr = new MenuManager("#PopupMenu");
+		menuMgr.setRemoveAllWhenShown(true);
+		menuMgr.addMenuListener(new IMenuListener()
+		{
+			public void menuAboutToShow(IMenuManager manager)
+			{
+				BBSListView.this.fillContextMenu(manager);
+			}
+		});
+		Menu menu = menuMgr.createContextMenu(treeViewer.getControl());
+		treeViewer.getControl().setMenu(menu);
+		getSite().registerContextMenu(menuMgr, treeViewer);
+	}
+
+	private void contributeToActionBars()
+	{
+		IActionBars bars = getViewSite().getActionBars();
+		fillLocalPullDown(bars.getMenuManager());
+		fillLocalToolBar(bars.getToolBarManager());
+	}
+
+	private void fillLocalPullDown(IMenuManager manager)
+	{
+		manager.add(sampleAction1);
+		manager.add(new Separator());
+		manager.add(sampleAction2);
+	}
+
+	private void fillContextMenu(IMenuManager manager)
+	{
+		manager.add(sampleAction1);
+		manager.add(sampleAction2);
+		manager.add(new Separator());
+		drillDownAdapter.addNavigationActions(manager);
+		// Other plug-ins can contribute there actions here
+		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
+	}
+
+	private void fillLocalToolBar(IToolBarManager manager)
+	{
+		manager.add(sampleAction1);
+		manager.add(sampleAction2);
+		manager.add(new Separator());
+		drillDownAdapter.addNavigationActions(manager);
+	}
+
+	private void makeActions()
+	{
+		sampleAction1 = new Action()
+		{
+			public void run()
+			{
+				showMessage("Action 1 executed");
+			}
+		};
+		sampleAction1.setText("Action 1");
+		sampleAction1.setToolTipText("Action 1 tooltip");
+		sampleAction1.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+
+		sampleAction2 = new Action()
+		{
+			public void run()
+			{
+				showMessage("Action 2 executed");
+			}
+		};
+		sampleAction2.setText("Action 2");
+		sampleAction2.setToolTipText("Action 2 tooltip");
+		sampleAction2.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		doubleClickAction = new Action()
+		{
+			public void run()
+			{
+				ISelection selection = treeViewer.getSelection();
+				Object obj = ((IStructuredSelection) selection).getFirstElement();
+				showMessage("Double-click detected on " + obj.toString());
+			}
+		};
+
+		collapseAction = new Action("すべて閉じる", PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_ELCL_COLLAPSEALL))
+		{
+			public void run()
+			{
+				treeViewer.collapseAll();
+			}
+		};
+		collapseAction.setToolTipText("すべて閉じる");
+
+		expandAction = new Action("すべて開く", PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_ELCL_SYNCED))
+		{
+			public void run()
+			{
+				treeViewer.expandAll();
+			}
+		};
+		expandAction.setToolTipText("すべて開く");
+
+	}
+
+	private void hookDoubleClickAction()
+	{
+		treeViewer.addDoubleClickListener(new IDoubleClickListener()
+		{
+			public void doubleClick(DoubleClickEvent event)
+			{
+				doubleClickAction.run();
+			}
+		});
+	}
+
+	private void showMessage(String message)
+	{
+		MessageDialog.openInformation(treeViewer.getControl().getShell(), "BBSList", message);
+	}
+
+	/**
+	 * Passing the focus request to the viewer's control.
+	 */
+	public void setFocus()
+	{
+		treeViewer.getControl().setFocus();
+	}
 
 	/*
 	 * The content provider class is responsible for
@@ -275,7 +458,7 @@ public class BBSListView extends ViewPart
 				}
 			}
 
-			TreeParent root = new TreeParent("一覧");
+			invisibleRoot = new TreeParent("");
 			Set<String> categoryKeySet = categoryMap.keySet();
 			for (String category : categoryKeySet)
 			{
@@ -287,11 +470,8 @@ public class BBSListView extends ViewPart
 					categoryNode.addChild(leaf);
 				}
 
-				root.addChild(categoryNode);
+				invisibleRoot.addChild(categoryNode);
 			}
-
-			invisibleRoot = new TreeParent("");
-			invisibleRoot.addChild(root);
 		}
 	}
 
@@ -325,139 +505,5 @@ public class BBSListView extends ViewPart
 
 	class NameSorter extends ViewerSorter
 	{
-	}
-
-	/**
-	 * The constructor.
-	 */
-	public BBSListView()
-	{
-	}
-
-	/**
-	 * This is a callback that will allow us
-	 * to create the viewer and initialize it.
-	 */
-	public void createPartControl(Composite parent)
-	{
-		viewer = new TreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
-		drillDownAdapter = new DrillDownAdapter(viewer);
-		viewer.setContentProvider(new ViewContentProvider());
-		viewer.setLabelProvider(new ViewLabelProvider());
-		viewer.setSorter(new NameSorter());
-		viewer.setInput(getViewSite());
-
-		// Create the help context id for the viewer's control
-		PlatformUI.getWorkbench().getHelpSystem().setHelp(viewer.getControl(), "Gikolipse.viewer");
-		makeActions();
-		hookContextMenu();
-		hookDoubleClickAction();
-		contributeToActionBars();
-	}
-
-	private void hookContextMenu()
-	{
-		MenuManager menuMgr = new MenuManager("#PopupMenu");
-		menuMgr.setRemoveAllWhenShown(true);
-		menuMgr.addMenuListener(new IMenuListener()
-		{
-			public void menuAboutToShow(IMenuManager manager)
-			{
-				BBSListView.this.fillContextMenu(manager);
-			}
-		});
-		Menu menu = menuMgr.createContextMenu(viewer.getControl());
-		viewer.getControl().setMenu(menu);
-		getSite().registerContextMenu(menuMgr, viewer);
-	}
-
-	private void contributeToActionBars()
-	{
-		IActionBars bars = getViewSite().getActionBars();
-		fillLocalPullDown(bars.getMenuManager());
-		fillLocalToolBar(bars.getToolBarManager());
-	}
-
-	private void fillLocalPullDown(IMenuManager manager)
-	{
-		manager.add(action1);
-		manager.add(new Separator());
-		manager.add(action2);
-	}
-
-	private void fillContextMenu(IMenuManager manager)
-	{
-		manager.add(action1);
-		manager.add(action2);
-		manager.add(new Separator());
-		drillDownAdapter.addNavigationActions(manager);
-		// Other plug-ins can contribute there actions here
-		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
-	}
-
-	private void fillLocalToolBar(IToolBarManager manager)
-	{
-		manager.add(action1);
-		manager.add(action2);
-		manager.add(new Separator());
-		drillDownAdapter.addNavigationActions(manager);
-	}
-
-	private void makeActions()
-	{
-		action1 = new Action()
-		{
-			public void run()
-			{
-				showMessage("Action 1 executed");
-			}
-		};
-		action1.setText("Action 1");
-		action1.setToolTipText("Action 1 tooltip");
-		action1.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
-
-		action2 = new Action()
-		{
-			public void run()
-			{
-				showMessage("Action 2 executed");
-			}
-		};
-		action2.setText("Action 2");
-		action2.setToolTipText("Action 2 tooltip");
-		action2.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
-		doubleClickAction = new Action()
-		{
-			public void run()
-			{
-				ISelection selection = viewer.getSelection();
-				Object obj = ((IStructuredSelection) selection).getFirstElement();
-				showMessage("Double-click detected on " + obj.toString());
-			}
-		};
-	}
-
-	private void hookDoubleClickAction()
-	{
-		viewer.addDoubleClickListener(new IDoubleClickListener()
-		{
-			public void doubleClick(DoubleClickEvent event)
-			{
-				doubleClickAction.run();
-			}
-		});
-	}
-
-	private void showMessage(String message)
-	{
-		MessageDialog.openInformation(viewer.getControl().getShell(), "BBSList", message);
-	}
-
-	/**
-	 * Passing the focus request to the viewer's control.
-	 */
-	public void setFocus()
-	{
-		viewer.getControl().setFocus();
 	}
 }
