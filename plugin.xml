@@ -9,11 +9,25 @@
             id="Gikolipse">
       </category>
       <view
-            name="BBSList"
+            name="BBSListOld"
             icon="icons/sample.gif"
             category="Gikolipse"
+            class="gikolipse.views.BBSListView"
+            id="gikolipse.views.BBSListView">
+      </view>
+      <view
+            category="Gikolipse"
+            class="gikolipse.views.SampleView"
+            icon="icons/sample.gif"
+            id="gikolipse.views.SampleView"
+            name="サンプル・ビュー">
+      </view>
+      <view
+            category="Gikolipse"
             class="com.github.gikolipse.views.BBSListView"
-            id="com.github.gikolipse.views.BBSListView">
+            icon="icons/sample.gif"
+            id="com.github.gikolipse.views.BBSListView"
+            name="BBSList">
       </view>
    </extension>
    <extension
@@ -27,9 +41,33 @@
                id="com.github.gikolipse.views.BBSListView">
          </view>
       </perspectiveExtension>
+      <perspectiveExtension
+            targetID="org.eclipse.jdt.ui.JavaPerspective">
+         <view
+               id="gikolipse.views.ThreadListView"
+               ratio="0.5"
+               relationship="right"
+               relative="org.eclipse.ui.views.TaskList">
+         </view>
+      </perspectiveExtension>
+      <perspectiveExtension
+            targetID="org.eclipse.jdt.ui.JavaPerspective">
+         <view
+               id="gikolipse.views.SampleView"
+               ratio="0.5"
+               relationship="right"
+               relative="org.eclipse.ui.views.TaskList">
+         </view>
+      </perspectiveExtension>
    </extension>
    <extension
          point="org.eclipse.help.contexts">
+      <contexts
+            file="contexts.xml">
+      </contexts>
+      <contexts
+            file="contexts.xml">
+      </contexts>
       <contexts
             file="contexts.xml">
       </contexts>
