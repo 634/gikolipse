@@ -7,6 +7,8 @@ import org.eclipse.ui.part.ViewPart;
 
 public class ThreadView extends ViewPart {
 
+    public static final String ID = "com.github.gikolipse.views.ThreadView";
+
     public ThreadView() {
         super();
     }

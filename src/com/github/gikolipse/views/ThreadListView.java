@@ -52,6 +52,7 @@ public class ThreadListView extends ViewPart {
     private Action goCategoryAction;
 
     private TableViewer viewer;
+
     private IDoubleClickListener topDoubleClickListener;
     private IDoubleClickListener categoryDoubleClickListener;
     private IDoubleClickListener threadDoubleClickListener;
@@ -59,7 +60,7 @@ public class ThreadListView extends ViewPart {
     private String backCategory;
     private String currentCategory;
 
-    public static final String ID = "gikolipse.views.SampleView";
+    public static final String ID = "com.github.gikolipse.views.ThreadListView";
 
     public void createPartControl(Composite parent) {
 	Composite container = new Composite(parent, SWT.NONE);
@@ -140,6 +141,17 @@ public class ThreadListView extends ViewPart {
 	};
     }
 
+    private void setDoubldClickListener(IDoubleClickListener doubleClickListener) {
+	removeAllDoubleClickListener();
+	viewer.addDoubleClickListener(doubleClickListener);
+    }
+
+    private void removeAllDoubleClickListener() {
+	viewer.removeDoubleClickListener(topDoubleClickListener);
+	viewer.removeDoubleClickListener(categoryDoubleClickListener);
+	viewer.removeDoubleClickListener(threadDoubleClickListener);
+    }
+
     private void createTopControl() {
 	currentCategory = null;
 	backCategory = null;
@@ -157,9 +169,7 @@ public class ThreadListView extends ViewPart {
 	}
 
 	viewer.setInput(topList);
-	viewer.removeDoubleClickListener(categoryDoubleClickListener);
-	viewer.removeDoubleClickListener(threadDoubleClickListener);
-	viewer.addDoubleClickListener(topDoubleClickListener);
+	setDoubldClickListener(topDoubleClickListener);
     }
 
     private void createCategoryControl(String topCategoryString) {
@@ -174,8 +184,7 @@ public class ThreadListView extends ViewPart {
 
 	viewer.setInput(bbsList);
 
-	viewer.removeDoubleClickListener(topDoubleClickListener);
-	viewer.addDoubleClickListener(categoryDoubleClickListener);
+	setDoubldClickListener(categoryDoubleClickListener);
     }
 
     private void createThreadListControl(A a) {
@@ -188,8 +197,7 @@ public class ThreadListView extends ViewPart {
 	List<A> threadList = bbsListService.createThreadList(a.url);
 	viewer.setInput(threadList);
 
-	viewer.removeDoubleClickListener(categoryDoubleClickListener);
-	viewer.addDoubleClickListener(threadDoubleClickListener);
+	setDoubldClickListener(threadDoubleClickListener);
     }
 
     private void createThreadViewControl(A a) {
@@ -197,7 +205,7 @@ public class ThreadListView extends ViewPart {
 	IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
 	IWorkbenchPage page = window.getActivePage();
 	try {
-	    page.showView("com.github.gikolipse.views.ThreadView");
+	    page.showView(ThreadView.ID);
 	} catch (PartInitException e) {
 	    throw new GikolipseException(e);
 	}
