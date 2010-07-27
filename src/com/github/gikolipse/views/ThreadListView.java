@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
@@ -20,6 +21,8 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
@@ -33,14 +36,28 @@ import com.github.gikolipse.utils.A;
 
 public class ThreadListView extends ViewPart {
 
+    // ホーム→カテゴリ
     private Action topClickAction;
+
+    // カテゴリ→スレッド
     private Action categoryClickAction;
+
+    // スレッドクリック
     private Action threadClickAction;
-    private TableColumn column;
+
+    // *→ホーム
+    private Action goHomeAction;
+
+    // スレッド→カテゴリ
+    private Action goCategoryAction;
+
     private TableViewer viewer;
     private IDoubleClickListener topDoubleClickListener;
     private IDoubleClickListener categoryDoubleClickListener;
     private IDoubleClickListener threadDoubleClickListener;
+
+    private String backCategory;
+    private String currentCategory;
 
     public static final String ID = "gikolipse.views.SampleView";
 
@@ -51,10 +68,21 @@ public class ThreadListView extends ViewPart {
 
 	initialize();
 
-	createTopControl(parent);
+	createTopControl();
     }
 
+    /**
+     * 共通初期化処理
+     */
     private void initialize() {
+	Table table = viewer.getTable();
+	table.setHeaderVisible(false);
+	table.setLinesVisible(false);
+
+	TableColumn column = new TableColumn(table, SWT.NULL, 0);
+	column.setText("-");
+	column.setWidth(200);
+
 	topClickAction = new Action() {
 	    public void run() {
 		topClickAction();
@@ -73,6 +101,28 @@ public class ThreadListView extends ViewPart {
 	    }
 	};
 
+	goHomeAction = new Action() {
+	    public void run() {
+		goHomeAction();
+	    }
+	};
+	goHomeAction.setText("ホーム");
+	goHomeAction.setToolTipText("ホームに戻る");
+	goHomeAction.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_ETOOL_HOME_NAV));
+	IActionBars bars = getViewSite().getActionBars();
+	IToolBarManager toolBarManager = bars.getToolBarManager();
+	toolBarManager.add(goHomeAction);
+
+	goCategoryAction = new Action() {
+	    public void run() {
+		goCategoryAction();
+	    }
+	};
+	goCategoryAction.setText("戻る");
+	goCategoryAction.setToolTipText("１つ前の画面に戻る");
+	goCategoryAction.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_TOOL_BACK));
+	toolBarManager.add(goCategoryAction);
+
 	topDoubleClickListener = new IDoubleClickListener() {
 	    public void doubleClick(DoubleClickEvent event) {
 		topClickAction.run();
@@ -90,14 +140,9 @@ public class ThreadListView extends ViewPart {
 	};
     }
 
-    private void createTopControl(Composite parent) {
-	Table table = viewer.getTable();
-	table.setHeaderVisible(true);
-	table.setLinesVisible(false);
-
-	column = new TableColumn(table, SWT.NULL, 0);
-	column.setText("-");
-	column.setWidth(200);
+    private void createTopControl() {
+	currentCategory = null;
+	backCategory = null;
 
 	viewer.setContentProvider(new ArrayContentProvider());
 	viewer.setLabelProvider(new ViewLabelProvider());
@@ -112,14 +157,14 @@ public class ThreadListView extends ViewPart {
 	}
 
 	viewer.setInput(topList);
+	viewer.removeDoubleClickListener(categoryDoubleClickListener);
+	viewer.removeDoubleClickListener(threadDoubleClickListener);
 	viewer.addDoubleClickListener(topDoubleClickListener);
     }
 
     private void createCategoryControl(String topCategoryString) {
-	Table table = viewer.getTable();
-	table.setHeaderVisible(true);
-	table.setLinesVisible(false);
-
+	currentCategory = topCategoryString;
+	backCategory = null;
 	viewer.setContentProvider(new ArrayContentProvider());
 	viewer.setLabelProvider(new ViewLabelProvider());
 
@@ -134,9 +179,7 @@ public class ThreadListView extends ViewPart {
     }
 
     private void createThreadListControl(A a) {
-	Table table = viewer.getTable();
-	table.setHeaderVisible(true);
-	table.setLinesVisible(false);
+	backCategory = currentCategory;
 
 	viewer.setContentProvider(new ArrayContentProvider());
 	viewer.setLabelProvider(new ViewLabelProvider());
@@ -150,9 +193,6 @@ public class ThreadListView extends ViewPart {
     }
 
     private void createThreadViewControl(A a) {
-	System.out.println(a.url);
-	System.out.println("");
-
 	IWorkbench workbench = PlatformUI.getWorkbench();
 	IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
 	IWorkbenchPage page = window.getActivePage();
@@ -177,6 +217,18 @@ public class ThreadListView extends ViewPart {
 	A a = (A) obj;
 
 	createThreadListControl(a);
+    }
+
+    private void goHomeAction() {
+	createTopControl();
+    }
+
+    private void goCategoryAction() {
+	if (backCategory != null) {
+	    createCategoryControl(currentCategory);
+	} else if (currentCategory != null) {
+	    createTopControl();
+	}
     }
 
     private void threadClickAction() {
