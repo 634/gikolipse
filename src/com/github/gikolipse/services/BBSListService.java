@@ -13,9 +13,11 @@ import java.util.regex.Pattern;
 import com.github.gikolipse.utils.A;
 import com.github.gikolipse.utils.WebUtil;
 
-public class BBSListService {
+public class BBSListService
+{
 
-	public List<A> createThreadList(String bbsUrl) {
+	public List<A> createThreadList(String bbsUrl)
+	{
 		String subbackHtmlUrl = bbsUrl + "subback.html";
 
 		WebUtil webUtil = new WebUtil();
@@ -25,10 +27,12 @@ public class BBSListService {
 		List<A> threadList = new ArrayList<A>();
 
 		Pattern linkPattern = Pattern.compile("^<a href=\".*");
-		for (String htmlLine : htmlLines) {
+		for (String htmlLine : htmlLines)
+		{
 
 			Matcher categoryPatternMatcher = linkPattern.matcher(htmlLine);
-			if (categoryPatternMatcher.matches()) {
+			if (categoryPatternMatcher.matches())
+			{
 				Pattern pattern = Pattern.compile("<.+?>", Pattern.CASE_INSENSITIVE);
 				Matcher matcher = pattern.matcher(htmlLine);
 				String linkText = matcher.replaceAll("");
@@ -42,7 +46,8 @@ public class BBSListService {
 		return threadList;
 	}
 
-	public Map<String, List<A>> createBBSList() {
+	public Map<String, List<A>> createBBSList()
+	{
 		WebUtil webUtil = new WebUtil();
 		String html = webUtil.readContents("http://menu.2ch.net/bbsmenu.html", ENCODING_2CH);
 		String[] htmlLines = html.split(RETURN_STRING);
@@ -54,17 +59,20 @@ public class BBSListService {
 		Pattern categoryPattern = Pattern.compile("^<BR><BR><B>.*</B><BR>$");
 		Pattern linkPattern = Pattern.compile("^<A HREF=.*");
 
-		for (String htmlLine : htmlLines) {
+		for (String htmlLine : htmlLines)
+		{
 
 			String linkText = "";
 			String linkUrl = "";
 
-			if (htmlLine.equals("")) {
+			if (htmlLine.equals(""))
+			{
 				categoryFlag = false;
 			}
 
 			Matcher categoryPatternMatcher = categoryPattern.matcher(htmlLine);
-			if (categoryPatternMatcher.matches()) {
+			if (categoryPatternMatcher.matches())
+			{
 				categoryFlag = true;
 
 				Pattern pattern = Pattern.compile("<.+?>", Pattern.CASE_INSENSITIVE);
@@ -72,13 +80,15 @@ public class BBSListService {
 				category = matcher.replaceAll("");
 				category = category.trim();
 
-				if (!categoryMap.containsKey(category)) {
+				if (!categoryMap.containsKey(category))
+				{
 					categoryMap.put(category, new ArrayList<A>());
 				}
 			}
 
 			Matcher linkPatternMatcher = linkPattern.matcher(htmlLine);
-			if (categoryFlag && linkPatternMatcher.matches()) {
+			if (categoryFlag && linkPatternMatcher.matches())
+			{
 				Pattern pattern = Pattern.compile("<.+?>", Pattern.CASE_INSENSITIVE);
 				Matcher matcher = pattern.matcher(htmlLine);
 				linkText = matcher.replaceAll("");
