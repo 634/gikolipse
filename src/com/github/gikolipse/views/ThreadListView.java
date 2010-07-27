@@ -76,6 +76,8 @@ public class ThreadListView extends ViewPart {
      * 共通初期化処理
      */
     private void initialize() {
+	getSite().setSelectionProvider(viewer);
+	
 	Table table = viewer.getTable();
 	table.setHeaderVisible(false);
 	table.setLinesVisible(false);
