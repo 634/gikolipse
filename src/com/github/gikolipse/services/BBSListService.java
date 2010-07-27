@@ -13,95 +13,85 @@ import java.util.regex.Pattern;
 import com.github.gikolipse.utils.A;
 import com.github.gikolipse.utils.WebUtil;
 
-public class BBSListService
-{
+public class BBSListService {
 
-	public List<A> createThreadList(String bbsUrl)
-	{
-		String subbackHtmlUrl = bbsUrl + "subback.html";
+    public List<A> createThreadList(String bbsUrl) {
+	String subbackHtmlUrl = bbsUrl + "subback.html";
 
-		WebUtil webUtil = new WebUtil();
-		String html = webUtil.readContents(subbackHtmlUrl, ENCODING_2CH);
-		String[] htmlLines = html.split(RETURN_STRING);
+	WebUtil webUtil = new WebUtil();
+	String html = webUtil.readContents(subbackHtmlUrl, ENCODING_2CH);
+	String[] htmlLines = html.split(RETURN_STRING);
 
-		List<A> threadList = new ArrayList<A>();
+	List<A> threadList = new ArrayList<A>();
 
-		Pattern linkPattern = Pattern.compile("^<a href=\".*");
-		for (String htmlLine : htmlLines)
-		{
+	Pattern linkPattern = Pattern.compile("^<a href=\".*");
+	for (String htmlLine : htmlLines) {
 
-			Matcher categoryPatternMatcher = linkPattern.matcher(htmlLine);
-			if (categoryPatternMatcher.matches())
-			{
-				Pattern pattern = Pattern.compile("<.+?>", Pattern.CASE_INSENSITIVE);
-				Matcher matcher = pattern.matcher(htmlLine);
-				String linkText = matcher.replaceAll("");
+	    Matcher categoryPatternMatcher = linkPattern.matcher(htmlLine);
+	    if (categoryPatternMatcher.matches()) {
+		Pattern pattern = Pattern.compile("<.+?>", Pattern.CASE_INSENSITIVE);
+		Matcher matcher = pattern.matcher(htmlLine);
+		String linkText = matcher.replaceAll("");
 
-				String linkUrl = htmlLine.substring(htmlLine.indexOf("href=\"") + 6, htmlLine.indexOf(">"));
+		String linkUrl = htmlLine.substring(htmlLine.indexOf("href=\"") + 6, htmlLine.indexOf(">"));
 
-				threadList.add(new A(linkText, linkUrl));
-			}
-		}
-
-		return threadList;
+		threadList.add(new A(linkText, linkUrl));
+	    }
 	}
 
-	public Map<String, List<A>> createBBSList()
-	{
-		WebUtil webUtil = new WebUtil();
-		String html = webUtil.readContents("http://menu.2ch.net/bbsmenu.html", ENCODING_2CH);
-		String[] htmlLines = html.split(RETURN_STRING);
+	return threadList;
+    }
 
-		Map<String, List<A>> categoryMap = new HashMap<String, List<A>>();
-		boolean categoryFlag = false;
-		String category = "";
+    public Map<String, List<A>> createBBSList() {
+	WebUtil webUtil = new WebUtil();
+	String html = webUtil.readContents("http://menu.2ch.net/bbsmenu.html", ENCODING_2CH);
+	String[] htmlLines = html.split(RETURN_STRING);
 
-		Pattern categoryPattern = Pattern.compile("^<BR><BR><B>.*</B><BR>$");
-		Pattern linkPattern = Pattern.compile("^<A HREF=.*");
+	Map<String, List<A>> categoryMap = new HashMap<String, List<A>>();
+	boolean categoryFlag = false;
+	String category = "";
 
-		for (String htmlLine : htmlLines)
-		{
+	Pattern categoryPattern = Pattern.compile("^<BR><BR><B>.*</B><BR>$");
+	Pattern linkPattern = Pattern.compile("^<A HREF=.*");
 
-			String linkText = "";
-			String linkUrl = "";
+	for (String htmlLine : htmlLines) {
 
-			if (htmlLine.equals(""))
-			{
-				categoryFlag = false;
-			}
+	    String linkText = "";
+	    String linkUrl = "";
 
-			Matcher categoryPatternMatcher = categoryPattern.matcher(htmlLine);
-			if (categoryPatternMatcher.matches())
-			{
-				categoryFlag = true;
+	    if (htmlLine.equals("")) {
+		categoryFlag = false;
+	    }
 
-				Pattern pattern = Pattern.compile("<.+?>", Pattern.CASE_INSENSITIVE);
-				Matcher matcher = pattern.matcher(htmlLine);
-				category = matcher.replaceAll("");
-				category = category.trim();
+	    Matcher categoryPatternMatcher = categoryPattern.matcher(htmlLine);
+	    if (categoryPatternMatcher.matches()) {
+		categoryFlag = true;
 
-				if (!categoryMap.containsKey(category))
-				{
-					categoryMap.put(category, new ArrayList<A>());
-				}
-			}
+		Pattern pattern = Pattern.compile("<.+?>", Pattern.CASE_INSENSITIVE);
+		Matcher matcher = pattern.matcher(htmlLine);
+		category = matcher.replaceAll("");
+		category = category.trim();
 
-			Matcher linkPatternMatcher = linkPattern.matcher(htmlLine);
-			if (categoryFlag && linkPatternMatcher.matches())
-			{
-				Pattern pattern = Pattern.compile("<.+?>", Pattern.CASE_INSENSITIVE);
-				Matcher matcher = pattern.matcher(htmlLine);
-				linkText = matcher.replaceAll("");
-
-				linkUrl = htmlLine.substring(htmlLine.indexOf("http"), htmlLine.indexOf(">"));
-				linkUrl = linkUrl.replaceAll(" TARGET=_blank", "");
-
-				List<A> aList = categoryMap.get(category);
-				aList.add(new A(linkText, linkUrl));
-				categoryMap.put(category, aList);
-			}
+		if (!categoryMap.containsKey(category)) {
+		    categoryMap.put(category, new ArrayList<A>());
 		}
+	    }
 
-		return categoryMap;
+	    Matcher linkPatternMatcher = linkPattern.matcher(htmlLine);
+	    if (categoryFlag && linkPatternMatcher.matches()) {
+		Pattern pattern = Pattern.compile("<.+?>", Pattern.CASE_INSENSITIVE);
+		Matcher matcher = pattern.matcher(htmlLine);
+		linkText = matcher.replaceAll("");
+
+		linkUrl = htmlLine.substring(htmlLine.indexOf("http"), htmlLine.indexOf(">"));
+		linkUrl = linkUrl.replaceAll(" TARGET=_blank", "");
+
+		List<A> aList = categoryMap.get(category);
+		aList.add(new A(linkText, linkUrl));
+		categoryMap.put(category, aList);
+	    }
 	}
+
+	return categoryMap;
+    }
 }
