@@ -20,8 +20,7 @@ public class WebUtil {
 	    URL urlObject = new URL(url);
 
 	    URLConnection uc = urlObject.openConnection();
-	    BufferedInputStream bis = new BufferedInputStream(uc
-		    .getInputStream());
+	    BufferedInputStream bis = new BufferedInputStream(uc.getInputStream());
 	    br = new BufferedReader(new InputStreamReader(bis, webSiteEncode));
 	    String line;
 	    while ((line = br.readLine()) != null) {

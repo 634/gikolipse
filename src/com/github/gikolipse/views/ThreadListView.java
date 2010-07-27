@@ -77,7 +77,7 @@ public class ThreadListView extends ViewPart {
      */
     private void initialize() {
 	getSite().setSelectionProvider(viewer);
-	
+
 	Table table = viewer.getTable();
 	table.setHeaderVisible(false);
 	table.setLinesVisible(false);
@@ -207,7 +207,7 @@ public class ThreadListView extends ViewPart {
 	IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
 	IWorkbenchPage page = window.getActivePage();
 	try {
-	    page.showView(ThreadView.ID);
+	    page.showView(BrowserView.ID);
 	} catch (PartInitException e) {
 	    throw new GikolipseException(e);
 	}

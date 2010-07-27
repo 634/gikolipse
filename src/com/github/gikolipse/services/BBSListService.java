@@ -13,10 +13,22 @@ import java.util.regex.Pattern;
 import com.github.gikolipse.utils.A;
 import com.github.gikolipse.utils.WebUtil;
 
+// http://pc11.2ch.net/hack/
+// http://pc11.2ch.net/hack/subback.html
+// 1275593668/l50
+// http://pc11.2ch.net/test/read.cgi/hack/1275593668/l50
+
 public class BBSListService {
 
     public List<A> createThreadList(String bbsUrl) {
 	String subbackHtmlUrl = bbsUrl + "subback.html";
+
+	String subDir = bbsUrl.replaceAll("http://", "");
+	subDir = subDir.substring(subDir.indexOf("/"));
+
+	String rootUrl = bbsUrl.replaceAll(subDir, "");
+
+	subDir = subDir.replaceAll("/", "");
 
 	WebUtil webUtil = new WebUtil();
 	String html = webUtil.readContents(subbackHtmlUrl, ENCODING_2CH);
@@ -33,7 +45,7 @@ public class BBSListService {
 		Matcher matcher = pattern.matcher(htmlLine);
 		String linkText = matcher.replaceAll("");
 
-		String linkUrl = htmlLine.substring(htmlLine.indexOf("href=\"") + 6, htmlLine.indexOf(">"));
+		String linkUrl = rootUrl + "/test/read.cgi/" + subDir + "/" + htmlLine.substring(htmlLine.indexOf("href=\"") + 6, htmlLine.indexOf(">") - 1);
 
 		threadList.add(new A(linkText, linkUrl));
 	    }
