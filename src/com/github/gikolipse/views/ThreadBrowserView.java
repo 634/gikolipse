@@ -31,7 +31,7 @@ public class ThreadBrowserView extends ViewPart {
 	// *→ホーム
 	private Action goHomeAction;
 
-	public static final String ID = "com.github.gikolipse.views.ThreadBrowserView";
+	public static final String ID = "com.github.gikolipse.views.BrowserView";
 
 	public ThreadBrowserView() {
 		super();

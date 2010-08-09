@@ -23,7 +23,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.ui.IActionBars;
-import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
@@ -51,7 +50,7 @@ public class ThreadListView extends ViewPart {
 
 	// スレッド→カテゴリ
 	private Action goCategoryAction;
-	
+
 	// 再読み込み
 	private Action refreshAction;
 
@@ -66,9 +65,11 @@ public class ThreadListView extends ViewPart {
 
 	private String backCategory;
 	private String currentCategory;
+	private A currentThread;
 
 	public static final String ID = "com.github.gikolipse.views.ThreadListView";
 
+	@Override
 	public void createPartControl(Composite parent) {
 		Composite container = new Composite(parent, SWT.NONE);
 		container.setLayout(new FillLayout());
@@ -110,18 +111,37 @@ public class ThreadListView extends ViewPart {
 				threadClickAction();
 			}
 		};
-		
+
 		threadClickBrowserAction = new Action() {
 			public void run() {
 				threadClickBrowserAction();
 			}
-		}; 
+		};
 
 		goHomeAction = new Action() {
 			public void run() {
 				goHomeAction();
 			}
 		};
+
+		goCategoryAction = new Action() {
+			public void run() {
+				goCategoryAction();
+			}
+		};
+
+		refreshAction = new Action() {
+			public void run() {
+				if (currentThread != null) {
+					createThreadListControl(currentThread);
+				} else if (currentCategory != null) {
+					createCategoryControl(currentCategory);
+				} else {
+					createTopControl();
+				}
+			}
+		};
+
 		goHomeAction.setText("ホーム");
 		goHomeAction.setToolTipText("ホームに戻る");
 		goHomeAction.setImageDescriptor(ImageDescriptor.createFromFile(getClass(), "/icons/icon_home.gif"));
@@ -129,35 +149,30 @@ public class ThreadListView extends ViewPart {
 		IToolBarManager toolBarManager = bars.getToolBarManager();
 		toolBarManager.add(goHomeAction);
 
-		goCategoryAction = new Action() {
-			public void run() {
-				goCategoryAction();
-			}
-		};
 		goCategoryAction.setText("戻る");
 		goCategoryAction.setToolTipText("１つ前の画面に戻る");
 		goCategoryAction.setImageDescriptor(ImageDescriptor.createFromFile(getClass(), "/icons/action_back.gif"));
 		toolBarManager.add(goCategoryAction);
-		
-		refreshAction = new Action() {
-			public void run() {
-				goCategoryAction();
-			}
-		};
+
 		refreshAction.setText("再読み込み");
 		refreshAction.setToolTipText("再読み込み");
 		refreshAction.setImageDescriptor(ImageDescriptor.createFromFile(getClass(), "/icons/action_refresh.gif"));
 		toolBarManager.add(refreshAction);
-		
+
 		threadClickAction.setText("テキスト形式で閲覧");
 		threadClickAction.setToolTipText("テキスト形式で閲覧");
 		threadClickAction.setImageDescriptor(ImageDescriptor.createFromFile(getClass(), "/icons/page_text.gif"));
+		threadClickAction.setDisabledImageDescriptor(ImageDescriptor.createFromFile(getClass(), "/icons/page_text_disabled.gif"));
 		toolBarManager.add(threadClickAction);
 
 		threadClickBrowserAction.setText("ブラウザビューで閲覧");
 		threadClickBrowserAction.setToolTipText("ブラウザビューで閲覧");
 		threadClickBrowserAction.setImageDescriptor(ImageDescriptor.createFromFile(getClass(), "/icons/page_url.gif"));
+		threadClickBrowserAction.setDisabledImageDescriptor(ImageDescriptor.createFromFile(getClass(), "/icons/page_url_disabled.gif"));
 		toolBarManager.add(threadClickBrowserAction);
+
+		threadClickAction.setEnabled(false);
+		threadClickBrowserAction.setEnabled(false);
 
 		topDoubleClickListener = new IDoubleClickListener() {
 			public void doubleClick(DoubleClickEvent event) {
@@ -190,6 +205,7 @@ public class ThreadListView extends ViewPart {
 	private void createTopControl() {
 		currentCategory = null;
 		backCategory = null;
+		currentThread = null;
 
 		viewer.setContentProvider(new ArrayContentProvider());
 		viewer.setLabelProvider(new ViewLabelProvider());
@@ -210,6 +226,8 @@ public class ThreadListView extends ViewPart {
 	private void createCategoryControl(String topCategoryString) {
 		currentCategory = topCategoryString;
 		backCategory = null;
+		currentThread = null;
+
 		viewer.setContentProvider(new ArrayContentProvider());
 		viewer.setLabelProvider(new ViewLabelProvider());
 
@@ -224,6 +242,7 @@ public class ThreadListView extends ViewPart {
 
 	private void createThreadListControl(A a) {
 		backCategory = currentCategory;
+		currentThread = a;
 
 		viewer.setContentProvider(new ArrayContentProvider());
 		viewer.setLabelProvider(new ViewLabelProvider());
@@ -231,6 +250,9 @@ public class ThreadListView extends ViewPart {
 		BBSService bbsListService = new BBSService();
 		List<A> threadList = bbsListService.createThreadList(a.url);
 		viewer.setInput(threadList);
+
+		threadClickAction.setEnabled(true);
+		threadClickBrowserAction.setEnabled(true);
 
 		setDoubldClickListener(threadDoubleClickListener);
 	}
@@ -274,10 +296,16 @@ public class ThreadListView extends ViewPart {
 	}
 
 	private void goHomeAction() {
+		threadClickAction.setEnabled(false);
+		threadClickBrowserAction.setEnabled(false);
+
 		createTopControl();
 	}
 
 	private void goCategoryAction() {
+		threadClickAction.setEnabled(false);
+		threadClickBrowserAction.setEnabled(false);
+
 		if (backCategory != null) {
 			createCategoryControl(currentCategory);
 		} else if (currentCategory != null) {
@@ -300,7 +328,7 @@ public class ThreadListView extends ViewPart {
 
 		createThreadViewBrowserControl(a);
 	}
-	
+
 	public void setFocus() {
 		viewer.getControl().setFocus();
 	}
