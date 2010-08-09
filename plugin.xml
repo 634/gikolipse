@@ -11,21 +11,21 @@
       <view
             category="Gikolipse"
             class="com.github.gikolipse.views.ThreadListView"
-            icon="icons/sample.gif"
+            icon="icons/page_find.gif"
             id="com.github.gikolipse.views.ThreadListView"
             name="スレッド選択">
       </view>
       <view
             category="Gikolipse"
             class="com.github.gikolipse.views.ThreadBrowserView"
-            icon="icons/sample.gif"
+            icon="icons/page_url.gif"
             id="com.github.gikolipse.views.ThreadBrowserView"
             name="スレッドブラウザビュー">
       </view>
       <view
             category="Gikolipse"
             class="com.github.gikolipse.views.ThreadTextView"
-            icon="icons/sample.gif"
+            icon="icons/page_text.gif"
             id="com.github.gikolipse.views.ThreadTextView"
             name="スレッドテキストビュー">
       </view>
