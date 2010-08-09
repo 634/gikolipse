@@ -17,10 +17,17 @@
       </view>
       <view
             category="Gikolipse"
-            class="com.github.gikolipse.views.BrowserView"
+            class="com.github.gikolipse.views.ThreadBrowserView"
             icon="icons/sample.gif"
-            id="com.github.gikolipse.views.BrowserView"
-            name="スレッドビュー">
+            id="com.github.gikolipse.views.ThreadBrowserView"
+            name="スレッドブラウザビュー">
+      </view>
+      <view
+            category="Gikolipse"
+            class="com.github.gikolipse.views.ThreadTextView"
+            icon="icons/sample.gif"
+            id="com.github.gikolipse.views.ThreadTextView"
+            name="スレッドテキストビュー">
       </view>
    </extension>
    <extension

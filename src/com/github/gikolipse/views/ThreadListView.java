@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
@@ -31,234 +32,286 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
 import com.github.gikolipse.exceptions.GikolipseException;
-import com.github.gikolipse.services.BBSListService;
+import com.github.gikolipse.services.BBSService;
 import com.github.gikolipse.utils.A;
 
 public class ThreadListView extends ViewPart {
 
-    // ホーム→カテゴリ
-    private Action topClickAction;
+	// ホーム→カテゴリ
+	private Action topClickAction;
 
-    // カテゴリ→スレッド
-    private Action categoryClickAction;
+	// カテゴリ→スレッド
+	private Action categoryClickAction;
 
-    // スレッドクリック
-    private Action threadClickAction;
+	// スレッドクリック
+	private Action threadClickAction;
 
-    // *→ホーム
-    private Action goHomeAction;
+	// *→ホーム
+	private Action goHomeAction;
 
-    // スレッド→カテゴリ
-    private Action goCategoryAction;
+	// スレッド→カテゴリ
+	private Action goCategoryAction;
+	
+	// 再読み込み
+	private Action refreshAction;
 
-    private TableViewer viewer;
+	// スレッド→ブラウザビュー
+	private Action threadClickBrowserAction;
 
-    private IDoubleClickListener topDoubleClickListener;
-    private IDoubleClickListener categoryDoubleClickListener;
-    private IDoubleClickListener threadDoubleClickListener;
+	private TableViewer viewer;
 
-    private String backCategory;
-    private String currentCategory;
+	private IDoubleClickListener topDoubleClickListener;
+	private IDoubleClickListener categoryDoubleClickListener;
+	private IDoubleClickListener threadDoubleClickListener;
 
-    public static final String ID = "com.github.gikolipse.views.ThreadListView";
+	private String backCategory;
+	private String currentCategory;
 
-    public void createPartControl(Composite parent) {
-	Composite container = new Composite(parent, SWT.NONE);
-	container.setLayout(new FillLayout());
-	viewer = new TableViewer(container, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL);
+	public static final String ID = "com.github.gikolipse.views.ThreadListView";
 
-	initialize();
+	public void createPartControl(Composite parent) {
+		Composite container = new Composite(parent, SWT.NONE);
+		container.setLayout(new FillLayout());
+		viewer = new TableViewer(container, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL);
 
-	createTopControl();
-    }
+		initialize();
 
-    /**
-     * 共通初期化処理
-     */
-    private void initialize() {
-	getSite().setSelectionProvider(viewer);
-
-	Table table = viewer.getTable();
-	table.setHeaderVisible(false);
-	table.setLinesVisible(false);
-
-	TableColumn column = new TableColumn(table, SWT.NULL, 0);
-	column.setText("-");
-	column.setWidth(200);
-
-	topClickAction = new Action() {
-	    public void run() {
-		topClickAction();
-	    }
-	};
-
-	categoryClickAction = new Action() {
-	    public void run() {
-		categoryClickAction();
-	    }
-	};
-
-	threadClickAction = new Action() {
-	    public void run() {
-		threadClickAction();
-	    }
-	};
-
-	goHomeAction = new Action() {
-	    public void run() {
-		goHomeAction();
-	    }
-	};
-	goHomeAction.setText("ホーム");
-	goHomeAction.setToolTipText("ホームに戻る");
-	goHomeAction.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_ETOOL_HOME_NAV));
-	IActionBars bars = getViewSite().getActionBars();
-	IToolBarManager toolBarManager = bars.getToolBarManager();
-	toolBarManager.add(goHomeAction);
-
-	goCategoryAction = new Action() {
-	    public void run() {
-		goCategoryAction();
-	    }
-	};
-	goCategoryAction.setText("戻る");
-	goCategoryAction.setToolTipText("１つ前の画面に戻る");
-	goCategoryAction.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_TOOL_BACK));
-	toolBarManager.add(goCategoryAction);
-
-	topDoubleClickListener = new IDoubleClickListener() {
-	    public void doubleClick(DoubleClickEvent event) {
-		topClickAction.run();
-	    }
-	};
-	categoryDoubleClickListener = new IDoubleClickListener() {
-	    public void doubleClick(DoubleClickEvent event) {
-		categoryClickAction.run();
-	    }
-	};
-	threadDoubleClickListener = new IDoubleClickListener() {
-	    public void doubleClick(DoubleClickEvent event) {
-		threadClickAction.run();
-	    }
-	};
-    }
-
-    private void setDoubldClickListener(IDoubleClickListener doubleClickListener) {
-	removeAllDoubleClickListener();
-	viewer.addDoubleClickListener(doubleClickListener);
-    }
-
-    private void removeAllDoubleClickListener() {
-	viewer.removeDoubleClickListener(topDoubleClickListener);
-	viewer.removeDoubleClickListener(categoryDoubleClickListener);
-	viewer.removeDoubleClickListener(threadDoubleClickListener);
-    }
-
-    private void createTopControl() {
-	currentCategory = null;
-	backCategory = null;
-
-	viewer.setContentProvider(new ArrayContentProvider());
-	viewer.setLabelProvider(new ViewLabelProvider());
-
-	BBSListService bbsListService = new BBSListService();
-	Map<String, List<A>> categoryMap = bbsListService.createBBSList();
-
-	Set<String> categoryKeySet = categoryMap.keySet();
-	List<String> topList = new ArrayList<String>();
-	for (String category : categoryKeySet) {
-	    topList.add(category);
+		createTopControl();
 	}
 
-	viewer.setInput(topList);
-	setDoubldClickListener(topDoubleClickListener);
-    }
+	/**
+	 * 共通初期化処理
+	 */
+	private void initialize() {
+		getSite().setSelectionProvider(viewer);
 
-    private void createCategoryControl(String topCategoryString) {
-	currentCategory = topCategoryString;
-	backCategory = null;
-	viewer.setContentProvider(new ArrayContentProvider());
-	viewer.setLabelProvider(new ViewLabelProvider());
+		Table table = viewer.getTable();
+		table.setHeaderVisible(false);
+		table.setLinesVisible(false);
 
-	BBSListService bbsListService = new BBSListService();
-	Map<String, List<A>> categoryMap = bbsListService.createBBSList();
-	List<A> bbsList = categoryMap.get(topCategoryString);
+		TableColumn column = new TableColumn(table, SWT.NULL, 0);
+		column.setText("-");
+		column.setWidth(800);
 
-	viewer.setInput(bbsList);
+		topClickAction = new Action() {
+			public void run() {
+				topClickAction();
+			}
+		};
 
-	setDoubldClickListener(categoryDoubleClickListener);
-    }
+		categoryClickAction = new Action() {
+			public void run() {
+				categoryClickAction();
+			}
+		};
 
-    private void createThreadListControl(A a) {
-	backCategory = currentCategory;
+		threadClickAction = new Action() {
+			public void run() {
+				threadClickAction();
+			}
+		};
+		
+		threadClickBrowserAction = new Action() {
+			public void run() {
+				threadClickBrowserAction();
+			}
+		}; 
 
-	viewer.setContentProvider(new ArrayContentProvider());
-	viewer.setLabelProvider(new ViewLabelProvider());
+		goHomeAction = new Action() {
+			public void run() {
+				goHomeAction();
+			}
+		};
+		goHomeAction.setText("ホーム");
+		goHomeAction.setToolTipText("ホームに戻る");
+		goHomeAction.setImageDescriptor(ImageDescriptor.createFromFile(getClass(), "/icons/icon_home.gif"));
+		IActionBars bars = getViewSite().getActionBars();
+		IToolBarManager toolBarManager = bars.getToolBarManager();
+		toolBarManager.add(goHomeAction);
 
-	BBSListService bbsListService = new BBSListService();
-	List<A> threadList = bbsListService.createThreadList(a.url);
-	viewer.setInput(threadList);
+		goCategoryAction = new Action() {
+			public void run() {
+				goCategoryAction();
+			}
+		};
+		goCategoryAction.setText("戻る");
+		goCategoryAction.setToolTipText("１つ前の画面に戻る");
+		goCategoryAction.setImageDescriptor(ImageDescriptor.createFromFile(getClass(), "/icons/action_back.gif"));
+		toolBarManager.add(goCategoryAction);
+		
+		refreshAction = new Action() {
+			public void run() {
+				goCategoryAction();
+			}
+		};
+		refreshAction.setText("再読み込み");
+		refreshAction.setToolTipText("再読み込み");
+		refreshAction.setImageDescriptor(ImageDescriptor.createFromFile(getClass(), "/icons/action_refresh.gif"));
+		toolBarManager.add(refreshAction);
+		
+		threadClickAction.setText("テキスト形式で閲覧");
+		threadClickAction.setToolTipText("テキスト形式で閲覧");
+		threadClickAction.setImageDescriptor(ImageDescriptor.createFromFile(getClass(), "/icons/page_text.gif"));
+		toolBarManager.add(threadClickAction);
 
-	setDoubldClickListener(threadDoubleClickListener);
-    }
+		threadClickBrowserAction.setText("ブラウザビューで閲覧");
+		threadClickBrowserAction.setToolTipText("ブラウザビューで閲覧");
+		threadClickBrowserAction.setImageDescriptor(ImageDescriptor.createFromFile(getClass(), "/icons/page_url.gif"));
+		toolBarManager.add(threadClickBrowserAction);
 
-    private void createThreadViewControl(A a) {
-	IWorkbench workbench = PlatformUI.getWorkbench();
-	IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
-	IWorkbenchPage page = window.getActivePage();
-	try {
-	    page.showView(BrowserView.ID);
-	} catch (PartInitException e) {
-	    throw new GikolipseException(e);
+		topDoubleClickListener = new IDoubleClickListener() {
+			public void doubleClick(DoubleClickEvent event) {
+				topClickAction.run();
+			}
+		};
+		categoryDoubleClickListener = new IDoubleClickListener() {
+			public void doubleClick(DoubleClickEvent event) {
+				categoryClickAction.run();
+			}
+		};
+		threadDoubleClickListener = new IDoubleClickListener() {
+			public void doubleClick(DoubleClickEvent event) {
+				threadClickAction.run();
+			}
+		};
 	}
-    }
 
-    private void topClickAction() {
-	ISelection selection = viewer.getSelection();
-	Object obj = ((IStructuredSelection) selection).getFirstElement();
-	String topCategoryString = obj.toString();
-
-	createCategoryControl(topCategoryString);
-    }
-
-    private void categoryClickAction() {
-	ISelection selection = viewer.getSelection();
-	Object obj = ((IStructuredSelection) selection).getFirstElement();
-	A a = (A) obj;
-
-	createThreadListControl(a);
-    }
-
-    private void goHomeAction() {
-	createTopControl();
-    }
-
-    private void goCategoryAction() {
-	if (backCategory != null) {
-	    createCategoryControl(currentCategory);
-	} else if (currentCategory != null) {
-	    createTopControl();
-	}
-    }
-
-    private void threadClickAction() {
-	ISelection selection = viewer.getSelection();
-	Object obj = ((IStructuredSelection) selection).getFirstElement();
-	A a = (A) obj;
-
-	createThreadViewControl(a);
-    }
-
-    public void setFocus() {
-    }
-
-    class ViewLabelProvider extends LabelProvider implements ITableLabelProvider {
-	public Image getColumnImage(Object element, int columnIndex) {
-	    return null;
+	private void setDoubldClickListener(IDoubleClickListener doubleClickListener) {
+		removeAllDoubleClickListener();
+		viewer.addDoubleClickListener(doubleClickListener);
 	}
 
-	public String getColumnText(Object element, int columnIndex) {
-	    return element.toString();
+	private void removeAllDoubleClickListener() {
+		viewer.removeDoubleClickListener(topDoubleClickListener);
+		viewer.removeDoubleClickListener(categoryDoubleClickListener);
+		viewer.removeDoubleClickListener(threadDoubleClickListener);
 	}
-    }
+
+	private void createTopControl() {
+		currentCategory = null;
+		backCategory = null;
+
+		viewer.setContentProvider(new ArrayContentProvider());
+		viewer.setLabelProvider(new ViewLabelProvider());
+
+		BBSService bbsService = new BBSService();
+		Map<String, List<A>> categoryMap = bbsService.createBBSList();
+
+		Set<String> categoryKeySet = categoryMap.keySet();
+		List<String> topList = new ArrayList<String>();
+		for (String category : categoryKeySet) {
+			topList.add(category);
+		}
+
+		viewer.setInput(topList);
+		setDoubldClickListener(topDoubleClickListener);
+	}
+
+	private void createCategoryControl(String topCategoryString) {
+		currentCategory = topCategoryString;
+		backCategory = null;
+		viewer.setContentProvider(new ArrayContentProvider());
+		viewer.setLabelProvider(new ViewLabelProvider());
+
+		BBSService bbsListService = new BBSService();
+		Map<String, List<A>> categoryMap = bbsListService.createBBSList();
+		List<A> bbsList = categoryMap.get(topCategoryString);
+
+		viewer.setInput(bbsList);
+
+		setDoubldClickListener(categoryDoubleClickListener);
+	}
+
+	private void createThreadListControl(A a) {
+		backCategory = currentCategory;
+
+		viewer.setContentProvider(new ArrayContentProvider());
+		viewer.setLabelProvider(new ViewLabelProvider());
+
+		BBSService bbsListService = new BBSService();
+		List<A> threadList = bbsListService.createThreadList(a.url);
+		viewer.setInput(threadList);
+
+		setDoubldClickListener(threadDoubleClickListener);
+	}
+
+	private void createThreadTextViewControl(A a) {
+		IWorkbench workbench = PlatformUI.getWorkbench();
+		IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
+		IWorkbenchPage page = window.getActivePage();
+		try {
+			page.showView(ThreadTextView.ID);
+		} catch (PartInitException e) {
+			throw new GikolipseException(e);
+		}
+	}
+
+	private void createThreadViewBrowserControl(A a) {
+		IWorkbench workbench = PlatformUI.getWorkbench();
+		IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
+		IWorkbenchPage page = window.getActivePage();
+		try {
+			page.showView(ThreadBrowserView.ID);
+		} catch (PartInitException e) {
+			throw new GikolipseException(e);
+		}
+	}
+
+	private void topClickAction() {
+		ISelection selection = viewer.getSelection();
+		Object obj = ((IStructuredSelection) selection).getFirstElement();
+		String topCategoryString = obj.toString();
+
+		createCategoryControl(topCategoryString);
+	}
+
+	private void categoryClickAction() {
+		ISelection selection = viewer.getSelection();
+		Object obj = ((IStructuredSelection) selection).getFirstElement();
+		A a = (A) obj;
+
+		createThreadListControl(a);
+	}
+
+	private void goHomeAction() {
+		createTopControl();
+	}
+
+	private void goCategoryAction() {
+		if (backCategory != null) {
+			createCategoryControl(currentCategory);
+		} else if (currentCategory != null) {
+			createTopControl();
+		}
+	}
+
+	private void threadClickAction() {
+		ISelection selection = viewer.getSelection();
+		Object obj = ((IStructuredSelection) selection).getFirstElement();
+		A a = (A) obj;
+
+		createThreadTextViewControl(a);
+	}
+
+	private void threadClickBrowserAction() {
+		ISelection selection = viewer.getSelection();
+		Object obj = ((IStructuredSelection) selection).getFirstElement();
+		A a = (A) obj;
+
+		createThreadViewBrowserControl(a);
+	}
+	
+	public void setFocus() {
+		viewer.getControl().setFocus();
+	}
+
+	class ViewLabelProvider extends LabelProvider implements ITableLabelProvider {
+		public Image getColumnImage(Object element, int columnIndex) {
+			return null;
+		}
+
+		public String getColumnText(Object element, int columnIndex) {
+			return element.toString();
+		}
+	}
 }
