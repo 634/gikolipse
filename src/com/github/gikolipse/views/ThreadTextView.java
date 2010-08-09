@@ -19,9 +19,9 @@ import com.github.gikolipse.utils.A;
 
 public class ThreadTextView extends ViewPart {
 
-	private Text text;
-
 	public static final String ID = "com.github.gikolipse.views.ThreadTextView";
+
+	private Text text;
 
 	public ThreadTextView() {
 		super();

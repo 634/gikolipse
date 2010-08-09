@@ -36,6 +36,8 @@ import com.github.gikolipse.utils.A;
 
 public class ThreadListView extends ViewPart {
 
+	public static final String ID = "com.github.gikolipse.views.ThreadListView";
+
 	// ホーム→カテゴリ
 	private Action topClickAction;
 
@@ -66,8 +68,6 @@ public class ThreadListView extends ViewPart {
 	private String backCategory;
 	private String currentCategory;
 	private A currentThread;
-
-	public static final String ID = "com.github.gikolipse.views.ThreadListView";
 
 	@Override
 	public void createPartControl(Composite parent) {

@@ -24,14 +24,14 @@ import com.github.gikolipse.utils.A;
 
 public class ThreadBrowserView extends ViewPart {
 
+	public static final String ID = "com.github.gikolipse.views.ThreadBrowserView";
+
 	private final String VIEW_FONT = "MS UI Gothic";
 
 	private Browser browser;
 
 	// *→ホーム
 	private Action goHomeAction;
-
-	public static final String ID = "com.github.gikolipse.views.BrowserView";
 
 	public ThreadBrowserView() {
 		super();
