@@ -7,18 +7,18 @@ import org.osgi.framework.BundleContext;
 /**
  * The activator class controls the plug-in life cycle
  */
-public class Activator extends AbstractUIPlugin {
+public class Gikolipse extends AbstractUIPlugin {
 
 	// The plug-in ID
 	public static final String PLUGIN_ID = "Gikolipse";
 
 	// The shared instance
-	private static Activator plugin;
+	private static Gikolipse plugin;
 
 	/**
 	 * The constructor
 	 */
-	public Activator() {
+	public Gikolipse() {
 	}
 
 	/*
@@ -50,7 +50,7 @@ public class Activator extends AbstractUIPlugin {
 	 * 
 	 * @return the shared instance
 	 */
-	public static Activator getDefault() {
+	public static Gikolipse getDefault() {
 		return plugin;
 	}
 

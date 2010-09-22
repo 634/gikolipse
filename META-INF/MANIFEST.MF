@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Gikolipse
 Bundle-SymbolicName: com.github.gikolipse.Gikolipse;singleton:=true
 Bundle-Version: 1.0.0.qualifier
-Bundle-Activator: com.github.gikolipse.Activator
+Bundle-Activator: com.github.gikolipse.Gikolipse
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
  org.eclipse.ui.ide;bundle-version="3.5.0",

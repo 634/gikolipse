@@ -94,6 +94,9 @@ public class ThreadListView extends ViewPart {
 		column.setText("-");
 		column.setWidth(800);
 
+		viewer.setContentProvider(new ArrayContentProvider());
+		viewer.setLabelProvider(new ViewLabelProvider());
+
 		topClickAction = new Action() {
 			public void run() {
 				topClickAction();
@@ -207,9 +210,6 @@ public class ThreadListView extends ViewPart {
 		backCategory = null;
 		currentThread = null;
 
-		viewer.setContentProvider(new ArrayContentProvider());
-		viewer.setLabelProvider(new ViewLabelProvider());
-
 		BBSService bbsService = new BBSService();
 		Map<String, List<A>> categoryMap = bbsService.createBBSList();
 
@@ -228,9 +228,6 @@ public class ThreadListView extends ViewPart {
 		backCategory = null;
 		currentThread = null;
 
-		viewer.setContentProvider(new ArrayContentProvider());
-		viewer.setLabelProvider(new ViewLabelProvider());
-
 		BBSService bbsListService = new BBSService();
 		Map<String, List<A>> categoryMap = bbsListService.createBBSList();
 		List<A> bbsList = categoryMap.get(topCategoryString);
@@ -243,9 +240,6 @@ public class ThreadListView extends ViewPart {
 	private void createThreadListControl(A a) {
 		backCategory = currentCategory;
 		currentThread = a;
-
-		viewer.setContentProvider(new ArrayContentProvider());
-		viewer.setLabelProvider(new ViewLabelProvider());
 
 		BBSService bbsListService = new BBSService();
 		List<A> threadList = bbsListService.createThreadList(a.url);
@@ -329,6 +323,7 @@ public class ThreadListView extends ViewPart {
 		createThreadViewBrowserControl(a);
 	}
 
+	@Override
 	public void setFocus() {
 		viewer.getControl().setFocus();
 	}
